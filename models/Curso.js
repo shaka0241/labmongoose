@@ -1,7 +1,7 @@
-// Importa Mongoose para definir el esquema y registrar el modelo.
+// Importa Mongoose, que permite describir documentos y trabajar con MongoDB desde Node.js.
 import mongoose from "mongoose";
 
-// Define la estructura de los documentos de cursos y las reglas de validación.
+// Define la estructura de cada curso y las reglas que Mongoose valida antes de guardarlo.
 const cursoSchema = new mongoose.Schema(
   {
     // Código único del curso; se guarda en mayúsculas y sin espacios externos.
@@ -58,13 +58,12 @@ const cursoSchema = new mongoose.Schema(
     },
   },
   {
-    // Añade automáticamente las fechas de creación y de última actualización.
-    timestamps: true, // Crea automáticamente createdAt y updatedAt
+    // Mongoose añadirá y actualizará createdAt y updatedAt automáticamente.
+    timestamps: true,
   },
 );
 
-// Reutiliza el modelo si ya está registrado, o lo crea a partir del esquema.
-// Evita recompilar el modelo si ya existe en entornos Serverless como Vercel
+// Reutiliza el modelo si ya está registrado (común en Serverless) o lo compila desde el esquema.
 const Curso = mongoose.models.Curso || mongoose.model("Curso", cursoSchema);
 
 // Exporta el modelo para que otros archivos puedan crear y consultar cursos.

@@ -1,4 +1,4 @@
-// Importa Mongoose, el cargador de variables de entorno y el modelo de cursos.
+// Importa la conexión de MongoDB, el cargador de variables y el modelo de cursos.
 import mongoose from "mongoose";
 import dotenv from "dotenv";
 import Curso from "./models/Curso.js";
@@ -6,7 +6,8 @@ import Curso from "./models/Curso.js";
 // Carga la URI de conexión y otras variables del archivo .env.
 dotenv.config();
 
-// Datos de ejemplo que se insertarán en la colección para realizar las prácticas.
+// Documentos de ejemplo para probar las consultas y validaciones del laboratorio.
+// instructor es un subdocumento y etiquetas es un arreglo de valores de texto.
 const cursosIniciales = [
   {
     codigo: "MERN-101",
@@ -60,25 +61,23 @@ const cursosIniciales = [
   },
 ];
 
-// Conecta a MongoDB, prepara los datos de ejemplo y demuestra las validaciones.
+// Conecta a MongoDB, reinicia los datos de ejemplo y demuestra las validaciones del esquema.
 async function poblarBaseDeDatos() {
   try {
-    // Abre la conexión a la base de datos usando la URI configurada.
+    // Abre la conexión a la base de datos usando la URI configurada en .env.
     await mongoose.connect(process.env.MONGODB_URI);
     console.log("Conectado a MongoDB Atlas");
 
-    // Vacía la colección antes de cargar los ejemplos, para evitar duplicados al repetir el script.
-    // 1. Limpiar colección previa para evitar duplicados al repetir la práctica
+    // Elimina todos los cursos existentes para que cada ejecución parta del mismo conjunto de datos.
+    // Atención: esta operación borra el contenido actual de la colección.
     await Curso.deleteMany({});
     console.log("Colección anterior limpiada");
 
-    // Inserta todos los cursos de ejemplo en una sola operación.
-    // 2. Insertar el lote de cursos válidos
+    // Inserta el arreglo completo; Mongoose valida cada documento antes de guardarlo.
     const insertados = await Curso.insertMany(cursosIniciales);
     console.log(`Se insertaron ${insertados.length} cursos correctamente.`);
 
-    // Intenta guardar un curso inválido para observar cómo Mongoose rechaza datos que no cumplen el esquema.
-    // 3. Prueba pedagógica: Intentar insertar un curso que viola el Schema
+    // Intenta guardar un curso que incumple varias reglas para observar los errores de validación.
     console.log("\n--- Probando el escudo de validación de Mongoose ---");
     try {
       await Curso.create({
@@ -90,20 +89,21 @@ async function poblarBaseDeDatos() {
         instructor: { nombre: "Pedro" },
       });
     } catch (errorValidacion) {
+      // Recorre los errores por campo para mostrar qué regla rechazó cada dato.
       console.log("Mongoose bloqueó el documento inválido con éxito:");
       Object.values(errorValidacion.errors).forEach((err) => {
         console.log(` - Campo [${err.path}]: ${err.message}`);
       });
     }
   } catch (error) {
-    // Informa de errores de conexión u otros errores generales durante la carga.
+    // Informa de errores generales, como fallos de conexión o inserción de los datos iniciales.
     console.error("Error general:", error.message);
   } finally {
-    // Cierra la conexión al terminar, incluso si se produjo un error.
+    // Cierra la conexión incluso si una operación anterior falla.
     await mongoose.disconnect();
     console.log("\nDesconectado de MongoDB Atlas");
   }
 }
 
-// Ejecuta la carga inicial al iniciar este archivo.
+// Ejecuta la preparación de datos al iniciar este archivo con Node.js.
 poblarBaseDeDatos();
